@@ -10,8 +10,10 @@
         "guzzlehttp/guzzle": "^7.9",
         "jenssegers/mongodb": "*",
         "laravel/framework": "^10.0",
+        "laravel/jetstream": "^4.3",
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.8",
+        "livewire/livewire": "^3.0",
         "mongodb/laravel-mongodb": "^5.1",
         "yajra/laravel-datatables": "^10.0"
     },
