@@ -1,0 +1,182 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Players;
+use App\Models\PlayerViewCount;
+use App\Repositories\PlayerProfileRepoInt;
+use Illuminate\Http\Request;
+
+class PlayerController extends Controller
+{
+    protected $playerRepository;
+
+    // Dependency Injection PageController sınıfına, PlayerProfileRepoInt bağımlılığı constructor üzerinden enjekte ediliyor:
+    //Bu sayede, PageController doğrudan bir PlayerProfileRepoInt sınıfına bağlı kalmaz, sadece arayüzü tanır.
+
+    public function __construct(PlayerProfileRepoInt $playerRepository)
+    {
+        $this->playerRepository = $playerRepository;
+    }
+
+    public function getPlayerProfilesById(Request $request)
+    {
+        $id = $request->input('id'); // İstekten id'yi al
+        $profile = $this->playerRepository->getPlayerDetailsById($id);
+
+        if (!$profile) {
+            return response()->json(['error' => 'Player not found'], 404);
+        }
+
+        return response()->json($profile);
+
+    }
+    public function getPlayerProfilesByName(Request $request)
+    {
+        $name = $request->input('name');
+
+        // Adına göre ilk 10 profili alıyoruz
+        $profiles = $this->playerRepository->getPlayerProfilesByName($name);
+
+        if (!$profiles || $profiles->isEmpty()) {
+            return response()->json(['error' => 'No players found'], 404);
+        }
+
+        return response()->json($profiles);
+    }
+
+    public function getPlayerProfilesByAgeRange(Request $request)
+    {
+        $minAge = $request->input('min_age'); // Minimum yaş verisini al
+        $maxAge = $request->input('max_age'); // Maksimum yaş verisini al
+
+        // Belirtilen yaş aralığındaki oyuncuları alıyoruz
+        $profiles = $this->playerRepository->getPlayerProfilesByAgeRange($minAge, $maxAge);
+
+        if (!$profiles || $profiles->isEmpty()) {
+            return response()->json(['error' => 'No players found'], 404);
+        }
+
+        return response()->json($profiles);
+    }
+
+    public function getPlayerProfileByMainPosition(Request $request)
+    {
+        $position = $request->input('position'); // Pozisyon verisini istekten al
+        $profile = $this->playerRepository->getPlayerProfileByMainPosition($position);
+
+        if (!$profile) {
+            return response()->json(['error' => 'Player not found'], 404);
+        }
+
+        return response()->json($profile);
+    }
+
+    public function getPlayerProfilesByNationality(Request $request)
+    {
+        $nationality = $request->input('nationality'); // Milliyeti istekten al
+        $profiles = $this->playerRepository->getPlayerProfilesByNationality($nationality);
+
+        if (!$profiles || $profiles->isEmpty()) {
+            return response()->json(['error' => 'No players found'], 404);
+        }
+
+        return response()->json($profiles);
+    }
+
+    public function getPlayerProfilesByClub(Request $request)
+    {
+        $clubName = $request->input('club'); // İstekten takım adını al
+
+        $profiles = $this->playerRepository->getPlayerProfilesByClub($clubName);
+
+        if (!$profiles || $profiles->isEmpty()) {
+            return response()->json(['error' => 'No players found'], 404);
+        }
+
+        return response()->json($profiles);
+    }
+
+
+    public function getPlayerProfilesByFoot(Request $request)
+    {
+        $foot = $request->input('foot'); // Oyuncunun kullandığı ayağı istekten al
+        $profiles = $this->playerRepository->getPlayerProfilesByFoot($foot);
+
+        if (!$profiles || $profiles->isEmpty()) {
+            return response()->json(['error' => 'No players found'], 404);
+        }
+
+        return response()->json($profiles);
+    }
+
+    public function getPlayerProfiles(Request $request)
+    {
+        $filters = $request->only(['name', 'min_age', 'max_age', 'position', 'nationality', 'club', 'foot', 'min_marketvalue', 'max_marketvalue']);
+
+        $profiles = $this->playerRepository->getPlayerProfiles($filters);
+
+        if (!$profiles || $profiles->isEmpty()) {
+            // 404 yerine error mesajı gönder
+            return response()->json(['error' => 'Hiç oyuncu bulunamadı.']);
+        }
+
+        return response()->json($profiles);
+    }
+
+    public function getPlayerProfilesByMarketValue(Request $request)
+    {
+        $minMarketValue = floatval($request->input('min_marketvalue'));
+        $maxMarketValue = floatval($request->input('max_marketvalue'));
+
+        $profiles = $this->playerRepository->getPlayerProfilesByMarketValueRange($minMarketValue, $maxMarketValue);
+
+        if (!$profiles || $profiles->isEmpty()) {
+            return response()->json(['error' => 'No players found'], 404);
+        }
+        return response()->json($profiles);
+    }
+
+    function increase_view_count($id)
+    {
+        $viewCountEntry = PlayerViewCount::where('player_id', $id)->first();
+
+        if ($viewCountEntry) {
+            $viewCountEntry->increment('view_count');
+        } else {
+            PlayerViewCount::create(['player_id' => $id, 'view_count' => 1]);
+        }
+    }
+    public function player_detail($id)
+    {
+        $this->increase_view_count($id);
+        // Örnek olarak bir repository'den verileri alıyoruz.
+        $playerDetails = $this->playerRepository->getPlayerDetailsById($id);
+
+        if (!$playerDetails) {
+            abort(404, 'Player not found');
+        }
+
+        return view('pages.player_detail', compact('playerDetails'));
+    }
+
+    public function live_search(Request $request)
+    {
+        $query = $request->input('query');
+        $players = $this->playerRepository->getPlayerProfilesByName($query);
+        return response()->json($players);
+    }
+
+    public function getPlayerView()
+    {
+        $profiles = $this->playerRepository->getPlayerProfilesView();
+        if (!$profiles || $profiles->isEmpty()) {
+            return response()->json(['error' => 'No players found'], 404);
+        }
+        return response()->json($profiles);
+    }
+
+
+}
+
+
