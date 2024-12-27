@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Players;
 use App\Models\PlayerViewCount;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use App\Repositories\PlayerProfileRepoInt;
 use App\Models\TopPlayerImage;
+use Illuminate\Support\Facades\Auth;
 
 
 class PageController extends Controller
@@ -19,7 +21,9 @@ class PageController extends Controller
     }
     public function index_home()
     {
+
         $topPlayer = PlayerViewCount::orderBy('weekly_view_count', 'desc')->first();
+
 
         $playerId = $topPlayer->player_id;
         $imageURLTopPlayer = $topPlayer->image_url;

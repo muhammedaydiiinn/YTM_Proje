@@ -65,6 +65,18 @@
             color: #fff;
         }
     </style>
+    <?php
+    use App\Models\Role;
+    use Illuminate\Support\Facades\Auth;
+    if (Auth::check()) {
+        $user = Auth::user();
+        $user_id = $user->_id;
+        $role = Role::where('user_id', $user_id)->first();
+    } else {
+        $role = null;
+        $user = null;
+    }
+    ?>
 </head>
 
 <body>
@@ -146,10 +158,7 @@
                         <!-- User -->
                         <li class="nav-item navbar-dropdown dropdown-user dropdown">
                             @guest
-                                <a class="nav-link" href="{{ route('login') }}">
-                                    <div class="avatar avatar-online">
-                                        <img src="{{asset('assets/img/avatars/guest.png')}}" alt class="w-px-40 h-auto rounded-circle" />
-                                    </div>
+                                <a class="btn btn-success" href="{{ route('login') }}">
                                     <span class="align-middle">Log In</span>
                                 </a>
                             @else
@@ -158,6 +167,7 @@
                                         <img src="{{asset('assets/img/avatars/1.png')}}" alt class="w-px-40 h-auto rounded-circle" />
                                     </div>
                                 </a>
+
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
                                         <a class="dropdown-item" href="#">
@@ -168,8 +178,8 @@
                                                     </div>
                                                 </div>
                                                 <div class="flex-grow-1">
-                                                    <span class="fw-semibold d-block">John Doe</span>
-                                                    <small class="text-muted">Admin</small>
+                                                    <span class="fw-semibold d-block">{{$user->name}}</span>
+                                                    <small class="text-muted">{{$role->name}}</small>
                                                 </div>
                                             </div>
                                         </a>

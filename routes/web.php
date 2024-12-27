@@ -38,10 +38,3 @@ Route::prefix('players')->group(function () {
     Route::get('/by_filters', [PlayerController::class, 'getPlayerProfiles'])->name('players.by_filters');
 });
 
-Route::middleware([
-    'auth:sanctum',
-    config('jetstream.auth_session'),
-    'verified',
-])->group(function () {
-    Route::get('/', [PageController::class, 'index_home'])->name('index_home');
-});
