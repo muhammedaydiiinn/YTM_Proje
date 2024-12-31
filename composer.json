@@ -15,7 +15,8 @@
         "laravel/tinker": "^2.8",
         "livewire/livewire": "^3.0",
         "mongodb/laravel-mongodb": "^5.1",
-        "yajra/laravel-datatables": "^10.0"
+        "yajra/laravel-datatables": "^10.0",
+        "yajra/laravel-datatables-oracle": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.20",

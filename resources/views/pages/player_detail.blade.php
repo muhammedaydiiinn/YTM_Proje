@@ -47,7 +47,7 @@
         .player-name {
             color: #1E2739;
             font-size: 20px;
-           padding-top: 5px;
+            padding-top: 5px;
         }
 
         .player-number {
@@ -200,7 +200,33 @@
             margin-top: 20px; /* Add some space from the previous element */
         }
     </style>
+    <style>
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
 
+        .fadeIn {
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        #analyse-player {
+            font-size: 16px;
+            background-color: #1E2739;
+            border: 3px #1ef876;
+            border-bottom: 6px #1ef876;
+            border-style: none solid solid solid;
+            padding: 15px;
+            color: white;
+            width: 100%; /* Full width */
+            margin-top: 20px; /* Add some space from the previous element */
+            display: none;
+        }
+    </style>
     <div class="container">
         <!-- Sol Kısım: Oyuncu Bilgileri -->
         <div class="player-details">
@@ -333,8 +359,63 @@
                 <div id="lineChart"></div>
             </div>
         @endif
+
+        <button onclick="analyzePlayer(<?php echo $playerDetails['profile']['id']; ?>)">Analyze Player</button>
+        <div id="analyse-player"></div>
     </div>
 
+
+
+
+
+    <script>
+        function analyzePlayer(playerId) {
+            const analysePlayerDiv = document.getElementById('analyse-player');
+
+
+            analysePlayerDiv.innerHTML = 'Piyasa değeri analiz ediliyor...';
+            analysePlayerDiv.style.display = 'block';
+            analysePlayerDiv.classList.add('fadeIn');
+
+            // Show second message after 2 seconds
+            setTimeout(() => {
+                analysePlayerDiv.innerHTML = 'Performansı analiz ediliyor...';
+                analysePlayerDiv.classList.remove('fadeIn');
+                analysePlayerDiv.classList.add('fadeIn');
+            }, 2000); // 2 seconds delay for second message
+
+            // Show third message after 4 seconds
+            setTimeout(() => {
+                analysePlayerDiv.innerHTML = 'Analiz tamamlanıyor...';
+                analysePlayerDiv.classList.remove('fadeIn');
+                analysePlayerDiv.classList.add('fadeIn');
+            }, 4000); // 4 seconds delay for third message
+
+            // Fetch request in the background, will not block the messages
+            fetch(`analyze-player/${playerId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Escape the special characters and preserve the text formatting
+                        const escapedData = data.data
+                            .replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>')  // Replace '**' with <strong> tags to show bold
+                            .replace(/ /g, '&nbsp;')  // Replace spaces with non-breaking spaces to preserve formatting
+                            .replace(/\n/g, '<br>'); // Replace newlines with <br> to preserve paragraph breaks
+
+                        // Show the final analysis result after fetch has completed
+                        setTimeout(() => {
+                            analysePlayerDiv.innerHTML = `<pre>${escapedData}</pre>`;
+                            analysePlayerDiv.classList.remove('fadeIn');
+                            analysePlayerDiv.classList.add('fadeIn');
+                        }, 4500); // Wait for final message (after 4.5 seconds)
+                    } else {
+                        analysePlayerDiv.innerHTML = 'Analysis failed';
+                        analysePlayerDiv.classList.add('fadeIn');
+                    }
+                });
+        }
+
+    </script>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -372,128 +453,127 @@
             renderPage(currentPage); // İlk sayfayı yükle
         });
     </script>
-@if(isset($playerDetails['market_value']['marketValueHistory']))
-    <script>
-        const marketValueHistory = <?php echo json_encode($playerDetails['market_value']['marketValueHistory']); ?>;
-    </script>
+    @if(isset($playerDetails['market_value']['marketValueHistory']))
+        <script>
+            const marketValueHistory = <?php echo json_encode($playerDetails['market_value']['marketValueHistory']); ?>;
+        </script>
 
-    <script>
-        const lineChartEl = document.querySelector('#lineChart');
+        <script>
+            const lineChartEl = document.querySelector('#lineChart');
 
-        // Veriler
+            // Veriler
 
-        const categories = marketValueHistory.map(item => {
-            // Gelen tarihi `Date` nesnesine çevir
-            const date = new Date(item.date);
+            const categories = marketValueHistory.map(item => {
+                // Gelen tarihi `Date` nesnesine çevir
+                const date = new Date(item.date);
 
-            // Türkçe formatta tarihi döndür
-            return new Intl.DateTimeFormat('tr-TR', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-            }).format(date);
-        });        const values = marketValueHistory.map(item => {
-            const valueStr = item.value.replace('€', '').trim();
+                // Türkçe formatta tarihi döndür
+                return new Intl.DateTimeFormat('tr-TR', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                }).format(date);
+            });        const values = marketValueHistory.map(item => {
+                const valueStr = item.value.replace('€', '').trim();
 
-            if (valueStr.endsWith('k')) {
-                return parseInt(valueStr.replace('k', '')) * 1000; // 'k' için 3 sıfır
-            } else if (valueStr.endsWith('m')) {
-                return parseFloat(valueStr.replace('m', '')) * 1000000; // 'm' için 6 sıfır
-            }
+                if (valueStr.endsWith('k')) {
+                    return parseInt(valueStr.replace('k', '')) * 1000; // 'k' için 3 sıfır
+                } else if (valueStr.endsWith('m')) {
+                    return parseFloat(valueStr.replace('m', '')) * 1000000; // 'm' için 6 sıfır
+                }
 
-            return parseFloat(valueStr); // Eğer 'k' veya 'm' yoksa, direkt sayı olarak kabul edilir
-        });
-        const clubIcons = marketValueHistory.map(
-            item => `https://tmssl.akamaized.net/images/wappen/head/${item.clubID}.png`
-        ); // Kulüp ikon URL'leri
+                return parseFloat(valueStr); // Eğer 'k' veya 'm' yoksa, direkt sayı olarak kabul edilir
+            });
+            const clubIcons = marketValueHistory.map(
+                item => `https://tmssl.akamaized.net/images/wappen/head/${item.clubID}.png`
+            ); // Kulüp ikon URL'leri
 
-        console.log(categories, values, clubIcons);
-        // Grafik Konfigürasyonu
-        const lineChartConfig = {
-            chart: {
-                height: 400,
-                type: 'line',
-                parentHeightOffset: 0,
-                zoom: {
+            // Grafik Konfigürasyonu
+            const lineChartConfig = {
+                chart: {
+                    height: 400,
+                    type: 'line',
+                    parentHeightOffset: 0,
+                    zoom: {
+                        enabled: false
+                    },
+                    toolbar: {
+                        show: false
+                    }
+                },
+                series: [
+                    {
+                        name: 'Market Value',
+                        data: values
+                    }
+                ],
+                markers: {
+                    size: 5,
+                    colors: ['#FFA500'],
+                    strokeColors: '#fff',
+                    strokeWidth: 2,
+                    hover: {
+                        size: 7
+                    }
+                },
+                dataLabels: {
                     enabled: false
                 },
-                toolbar: {
-                    show: false
-                }
-            },
-            series: [
-                {
-                    name: 'Market Value',
-                    data: values
-                }
-            ],
-            markers: {
-                size: 5,
-                colors: ['#FFA500'],
-                strokeColors: '#fff',
-                strokeWidth: 2,
-                hover: {
-                    size: 7
-                }
-            },
-            dataLabels: {
-                enabled: false
-            },
-            stroke: {
-                curve: 'smooth'
-            },
-            xaxis: {
-                categories: categories,
-                labels: {
-                    style: {
-                        colors: 'white', // X ekseni yazı rengi
-                        fontSize: '12px'
+                stroke: {
+                    curve: 'smooth'
+                },
+                xaxis: {
+                    categories: categories,
+                    labels: {
+                        style: {
+                            colors: 'white', // X ekseni yazı rengi
+                            fontSize: '12px'
+                        }
+                    },
+                    axisBorder: {
+                        show: true,
+                        color: 'white' // X ekseni çizgi rengi
+                    },
+                    axisTicks: {
+                        show: true,
+                        color: 'white' // X ekseni tick rengi
                     }
                 },
-                axisBorder: {
-                    show: true,
-                    color: 'white' // X ekseni çizgi rengi
-                },
-                axisTicks: {
-                    show: true,
-                    color: 'white' // X ekseni tick rengi
-                }
-            },
-            yaxis: {
-                labels: {
-                    style: {
-                        colors: 'white', // Y ekseni yazı rengi
-                        fontSize: '12px'
+                yaxis: {
+                    labels: {
+                        style: {
+                            colors: 'white', // Y ekseni yazı rengi
+                            fontSize: '12px'
+                        }
+                    },
+                    axisBorder: {
+                        show: true,
+                        color: 'white' // Y ekseni çizgi rengi
+                    },
+                    axisTicks: {
+                        show: true,
+                        color: 'white' // Y ekseni tick rengi
                     }
                 },
-                axisBorder: {
-                    show: true,
-                    color: 'white' // Y ekseni çizgi rengi
-                },
-                axisTicks: {
-                    show: true,
-                    color: 'white' // Y ekseni tick rengi
-                }
-            },
-            tooltip: {
-                custom: function({ series, seriesIndex, dataPointIndex }) {
-                    return `
+                tooltip: {
+                    custom: function({ series, seriesIndex, dataPointIndex }) {
+                        return `
                         <div style="padding: 10px; text-align: center; background-color: #1a202c;">
                           <img src="${clubIcons[dataPointIndex]}" alt="Club Icon" style="width: 30px; height: 40px; margin-bottom: 5px;" />
                           <div><strong>${categories[dataPointIndex]}</strong></div>
                           <div>Market Değeri: €${series[seriesIndex][dataPointIndex].toLocaleString()}</div>
                         </div>
                       `;
+                    }
                 }
+            };
+
+            // Grafiği Oluşturma
+            if (lineChartEl) {
+                const lineChart = new ApexCharts(lineChartEl, lineChartConfig);
+                lineChart.render();
             }
-        };
 
-        // Grafiği Oluşturma
-        if (lineChartEl) {
-            const lineChart = new ApexCharts(lineChartEl, lineChartConfig);
-            lineChart.render();
-        }
-
-    </script>
-@endif
+        </script>
+    @endif
 @endsection

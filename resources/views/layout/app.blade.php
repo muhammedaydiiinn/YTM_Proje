@@ -12,7 +12,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="{{asset('assets/vendor/fonts/boxicons.css')}}" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.6.4/css/buttons.dataTables.min.css">
 
+    <script src="https://code.jquery.com/jquery-3.6.3.js" integrity="sha256-nQLuAZGRRcILA+6dMBOvcRh5Pe310sBpanc6+QBmyVM=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
     <link rel="stylesheet" href="{{asset('assets/vendor/css/core.css')}}" class="template-customizer-core-css" />
     <link rel="stylesheet" href="{{asset('assets/vendor/css/theme-default.css')}}" class="template-customizer-theme-css" />
     <link rel="stylesheet" href="{{asset('assets/css/demo.css')}}" />
@@ -25,7 +29,8 @@
 
     <script src="{{asset('assets/js/config.js')}}"></script>
     <script src="{{asset('assets/vendor/libs/apex-charts/apexcharts.js')}}"></script>
-
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="{{asset('assets/dataTable.css')}}">
     <style>
         #search-results {
             position: absolute;
@@ -116,6 +121,20 @@
                         <div data-i18n="Analytics">Oyuncu Ara</div>
                     </a>
                 </li>
+                @if($role->name == 'admin')
+                <li class="menu-item {{ Route::is('admin.user_list') ? 'active' : '' }}">
+                    <a href="{{route('admin.user_list')}}" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-user-circle"></i>
+                        <div data-i18n="Analytics">Kullanıcılar</div>
+                    </a>
+                </li>
+                    <li class="menu-item {{ Route::is('admin.role_list') ? 'active' : '' }}">
+                        <a href="{{route('admin.role_list')}}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-user-circle"></i>
+                            <div data-i18n="Analytics">Roller</div>
+                        </a>
+                    </li>
+                @endif
             </ul>
         </aside>
         <!-- / Menu -->
@@ -243,7 +262,6 @@
 
 <!-- Core JS -->
 <!-- build:js assets/vendor/js/core.js -->
-<script src="{{asset('assets/vendor/libs/jquery/jquery.js')}}"></script>
 <script src="{{asset('assets/vendor/libs/popper/popper.js')}}"></script>
 <script src="{{asset('assets/vendor/js/bootstrap.js')}}"></script>
 <script src="{{asset('assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js')}}"></script>
@@ -259,6 +277,7 @@
 
 <!-- Page JS -->
 <script src="{{asset('assets/js/dashboards-analytics.js')}}"></script>
+
 
 <!-- Place this tag in your head or just before your close body tag. -->
 </body>

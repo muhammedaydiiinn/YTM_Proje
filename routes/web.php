@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\PlayerAnalysisController;
 use App\Http\Controllers\PlayerController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +26,7 @@ Route::get('/get-option', [PageController::class, 'get_option'])->name('get_opti
 Route::get('player/{id}', [PlayerController::class, 'player_detail'])->name('player_detail');
 Route::get('/live-search', [PlayerController::class, 'live_search'])->name('live_search');
 Route::get('/get-player-view', [PlayerController::class, 'getPlayerView'])->name('players.getPlayerView');
+Route::get('player/analyze-player/{id}', [PlayerAnalysisController::class, 'analyzePlayer']);
 
 // players routes
 Route::prefix('players')->group(function () {
@@ -36,5 +39,14 @@ Route::prefix('players')->group(function () {
     Route::get('/by-foot', [PlayerController::class, 'getPlayerProfilesByFoot'])->name('players.by_foot');
     Route::get('/by-market-value', [PlayerController::class, 'getPlayerProfilesByMarketValue'])->name('players.by_market-value');
     Route::get('/by_filters', [PlayerController::class, 'getPlayerProfiles'])->name('players.by_filters');
+    Route::get('/top-players', [PlayerController::class, 'getTopPlayers'])->name('players.top_players');
 });
 
+
+// admin routes
+Route::prefix('admin')->group(function () {
+    Route::get('/user_list', [AdminController::class, 'user_list'])->name('admin.user_list');
+    Route::get('/role_list', [AdminController::class, 'role_list'])->name('admin.role_list');
+    Route::get('/user_fetch', [AdminController::class, 'user_fetch'])->name('admin.user_fetch');
+
+});
