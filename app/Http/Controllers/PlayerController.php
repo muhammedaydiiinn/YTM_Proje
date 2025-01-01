@@ -226,6 +226,11 @@ class PlayerController extends Controller
         return response()->json($apiData);
 
     }
+    public function getLikeCount($playerId)
+    {
+        $likeCount = Like::where('player_id', $playerId)->count();
+        return response()->json(['likeCount' => $likeCount]);
+    }
     public function getTopPlayers()
     {
         $topPlayer = $this->playerRepository->getTopPlayers();
