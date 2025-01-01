@@ -48,5 +48,7 @@ Route::prefix('admin')->group(function () {
     Route::get('/user_list', [AdminController::class, 'user_list'])->name('admin.user_list');
     Route::get('/role_list', [AdminController::class, 'role_list'])->name('admin.role_list');
     Route::get('/user_fetch', [AdminController::class, 'user_fetch'])->name('admin.user_fetch');
+    Route::post('/users/status/{id}', [AdminController::class, 'user_status'])->name('admin.user_status');
+    Route::post('/users/delete/{id}', [AdminController::class, 'user_delete'])->name('admin.user_delete');
 
 });

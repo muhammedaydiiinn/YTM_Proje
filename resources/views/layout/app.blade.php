@@ -75,13 +75,11 @@
     use Illuminate\Support\Facades\Auth;
     if (Auth::check()) {
         $user = Auth::user();
-        $user_id = $user->_id;
-        $role = Role::where('user_id', $user_id)->first();
-    } else {
-        $role = null;
-        $user = null;
+        $role_id = $user->role_id;
+        $role = Role::where('role_id', $role_id)->first();
     }
     ?>
+
 </head>
 
 <body>
@@ -121,6 +119,7 @@
                         <div data-i18n="Analytics">Oyuncu Ara</div>
                     </a>
                 </li>
+                @if(Auth::check())
                 @if($role->name == 'admin')
                 <li class="menu-item {{ Route::is('admin.user_list') ? 'active' : '' }}">
                     <a href="{{route('admin.user_list')}}" class="menu-link">
@@ -134,6 +133,7 @@
                             <div data-i18n="Analytics">Roller</div>
                         </a>
                     </li>
+                @endif
                 @endif
             </ul>
         </aside>

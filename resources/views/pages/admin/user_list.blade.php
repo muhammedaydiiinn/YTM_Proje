@@ -26,41 +26,8 @@
             margin-bottom: 20px;
         }
 
-        .user-list table.dataTable {
-            background-color: #2A3448;
-            color: #FFFFFF;
-        }
-
-        .user-list table.dataTable thead {
-            background-color: #3A4458;
-        }
-
-        .user-list table.dataTable thead th {
-            border-bottom: 2px solid #1E2739 !important;
-            color: #FFFFFF !important;
-        }
-
-        .user-list table.dataTable tbody tr {
-            background-color: #3A4458 !important;
-        }
-        .sorting_1 {
-            color: #FFFFFF !important;
-        }
-
-
-        .user-list table.dataTable tbody td {
-            color: #FFFFFF !important;
-        }
-
-        .dataTables_info,
-        .dataTables_paginate,
-        .dataTables_filter label,
-        .dataTables_length label {
-            color: #FFFFFF !important;
-        }
     </style>
 
-    <div class="container">
         <div class="user-list">
             <div class="card">
                 <h1>Kullanıcı Listesi</h1>
@@ -73,6 +40,7 @@
                                     <th>#</th>
                                     <th>Ad</th>
                                     <th>Email</th>
+                                    <th>Rol</th>
                                     <th>Oluşturulma Tarihi</th>
                                     <th>İşlem</th>
                                 </tr>
@@ -83,7 +51,7 @@
                 </div>
             </div>
         </div>
-    </div>
+
 
     <script>
         $(document).ready(function () {
@@ -101,6 +69,7 @@
                     {data: 'DT_RowIndex', name: 'DT_RowIndex'},
                     {data: 'name', name: 'name'},
                     {data: 'email', name: 'email'},
+                    {data:'role', name:'role'},
                     {data: 'created_at', name: 'created_at'},
                     {data: 'action', name: 'action', orderable: false, searchable: false}
                 ]

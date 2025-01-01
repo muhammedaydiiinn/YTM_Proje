@@ -56,8 +56,6 @@ class PageController extends Controller
 
     public function filter_page()
     {
-
-
         return view('pages.filter');
     }
 
@@ -90,6 +88,4 @@ class PageController extends Controller
             'message' => null
         ]);
     }
-
-
 }

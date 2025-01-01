@@ -9,7 +9,7 @@ class Role extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name']; // Doldurulabilir alanlar
     protected $collection = 'roles'; // MongoDB koleksiyon adı
     protected $connection = 'mongodb'; // MongoDB bağlantısı
     public function users()

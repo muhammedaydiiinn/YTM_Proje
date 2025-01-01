@@ -9,6 +9,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
 use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Model implements AuthenticatableContract
 {
@@ -18,6 +19,7 @@ class User extends Model implements AuthenticatableContract
     use HasProfilePhoto;
     use Notifiable;
     use TwoFactorAuthenticatable;
+    use SoftDeletes;
 
     protected $connection = 'mongodb';
     protected $collection = 'users';
@@ -26,6 +28,7 @@ class User extends Model implements AuthenticatableContract
         'name',
         'email',
         'password',
+        'role_ids',
     ];
 
     protected $hidden = [
