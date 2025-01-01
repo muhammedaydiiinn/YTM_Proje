@@ -79,4 +79,46 @@ class AdminController extends Controller
         return redirect()->route('admin.user_list');
     }
 
+    public function role_fetch()
+    {
+        $roles = Role::all();
+        return DataTables::of($roles)
+            ->addColumn('role_id', function($row) {
+                return $row->role_id;
+            })
+            ->addColumn('name', function($row) {
+                return $row->name;
+            })
+            ->addColumn('action', function($row) {
+                // Düzenle ve sil butonları
+                $btn = '<form action="' . route('admin.role_delete', $row->role_id) . '" method="POST" style="display:inline;margin-right: 5px;">
+                            ' . csrf_field() . '
+                            <button type="submit" class="delete btn btn-danger btn-sm ">Sil</button>
+                        </form>';
+                return $btn;
+            })
+            ->rawColumns(['action']) // HTML içeriği için rawColumns kullanılır.
+            ->make(true);
+    }
+    public function role_create()
+    {
+        return view('pages.admin.role_create');
+    }
+    public function role_store(Request $request)
+    {
+        $lastRoleId = Role::max('role_id');
+        $role = new Role();
+        $role->name = $request->name;
+        $role->role_id = $lastRoleId + 1;
+        $role->save();
+        return redirect()->route('admin.role_list');
+    }
+    public function role_delete($id)
+    {
+        $id = (int)$id;
+        $role = Role::where('role_id', $id)->first();
+        $role->delete();
+        return redirect()->route('admin.role_list');
+    }
+
 }

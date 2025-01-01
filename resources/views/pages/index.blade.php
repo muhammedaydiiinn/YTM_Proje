@@ -3,98 +3,87 @@
 
     <style>
         /* Genel Ayarlamalar */
-        .carousel {
-            max-width: 100%; /* Görsellerin genişliğini sınırlamak için */
-            height: auto; /* Yükseklik içeriğe göre ayarlanacak */
-            margin: 0 auto; /* Ortalamak için */
+        .card-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
         }
 
-        /* Carousel İndikatörleri */
-        .carousel-indicators button {
-            background-color: #1ef876; /* İndikatör rengi */
-        }
-
-        /* Carousel İçerikleri */
-        .carousel-item img {
-            width: 100%;
-
-
-        }
-
-        .carousel-caption {
-            color: #fff; /* Yazı rengi */
-            padding: 20px;
-            border-radius: 5px;
+        .card {
+            background-color: #1f1f1f;
+            border-radius: 16px;
+            overflow: hidden;
+            width: 100%; /* Ekran genişliğine uyumlu */
+            max-width: 800px; /* Maksimum genişlik */
             text-align: center;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
         }
 
-        .carousel-caption h3 {
-            font-size: 1.5rem;
+        .card .header {
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            height: 50vh; /* Ekranın %40'ı kadar yükseklik */
+            min-height: 300px; /* Minimum yükseklik */
+        }
+
+        .card .header img {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            object-fit: contain;
+        }
+
+        .card .header::before {
+            content: "";
+            position: absolute;
+
+            bottom: 10px;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('<?php echo e($imageURLTopPlayer); ?>');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.3;
+            z-index: 0;
+        }
+
+        .card .footer {
+            background-color: #282828;
+            padding: 16px;
+        }
+
+        .card .footer .label {
+            font-size: 14px;
+            color: #aaaaaa;
+        }
+
+        .card .footer .player-name {
+            margin-top: 8px;
+            font-size: 18px;
             font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .carousel-caption p {
-            font-size: 1rem;
-        }
-
-        @media (min-width: 1400px) {
-            .container-xxl, .container-xl, .container-lg, .container-md, .container-sm, .container {
-                max-width: 1200px;
-            }
-        /* Mobil ve Küçük Ekranlar İçin */
-        @media (max-width: 768px) {
-            .carousel {
-                max-width: 100%;
-            }
-
-            .carousel-caption h3 {
-                font-size: 1.2rem; /* Daha küçük ekranlarda başlık font boyutunu küçült */
-            }
-
-            .carousel-caption p {
-                font-size: 0.9rem; /* Daha küçük ekranlarda açıklama font boyutunu küçült */
-            }
-        }
-
-        /* Çok Küçük Ekranlar İçin (örneğin telefonlar) */
-        @media (max-width: 480px) {
-            .carousel-caption h3 {
-                font-size: 1rem; /* Başlık fontunu daha da küçült */
-            }
-
-            .carousel-caption p {
-                font-size: 0.8rem; /* Açıklama fontunu daha da küçült */
-            }
         }
     </style>
 
-    <div id="carouselExample" class="carousel slide col-md-6 offset-md-2" data-bs-ride="carousel">
-        <div class="carousel-indicators">
-            <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="0" class="active"></button>
-            <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="1"></button>
-        </div>
-        <div class="carousel-inner">
-            <div class="carousel-item active">
-                <img class="d-block w-100" src="{{ $imageURLTopPlayer }}" alt="First slide" />
-                <div class="carousel-caption d-none d-md-block">
-                    <h3>
-                        <a href="{{ $topPlayer ? route('player_detail', ['id' => $topPlayer['profile']['id']]) : '#' }}">
-                            {{ $topPlayer ? $topPlayer['profile']['name'] : 'First slide' }}
-                        </a>
-                    </h3>
-                    <p>En Çok Ziyaret Edilen Oyuncu</p>
+    <!-- Player Card Display -->
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 offset-md-4 card-container">
+                <div class="card" onclick="window.location.href='<?php echo e($topPlayer ? route('player_detail', ['id' => $topPlayer['profile']['id']]) : '#'); ?>';">
+                    <div class="header" style="background-image: url('<?php echo e(asset('assets/img/filter_img/background.jpg')); ?>');">
+                        <img src="<?php echo e($imageURLTopPlayer); ?>" alt="Player Image">
+                    </div>
+                    <div class="footer">
+                        <div class="label">En Çok Ziyaret Edilen Oyuncu</div>
+                        <div class="player-name"><?php echo e($topPlayer ? $topPlayer['profile']['name'] : 'Bilgi Mevcut Değil'); ?></div>
+                    </div>
                 </div>
             </div>
         </div>
-        <a class="carousel-control-prev" href="#carouselExample" role="button" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Previous</span>
-        </a>
-        <a class="carousel-control-next" href="#carouselExample" role="button" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Next</span>
-        </a>
     </div>
-
 @endsection

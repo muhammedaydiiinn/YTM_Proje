@@ -26,7 +26,10 @@ Route::get('/get-option', [PageController::class, 'get_option'])->name('get_opti
 Route::get('player/{id}', [PlayerController::class, 'player_detail'])->name('player_detail');
 Route::get('/live-search', [PlayerController::class, 'live_search'])->name('live_search');
 Route::get('/get-player-view', [PlayerController::class, 'getPlayerView'])->name('players.getPlayerView');
+Route::get('/get-player-like', [PlayerController::class, 'getPlayerLike'])->name('players.getPlayerLike');
 Route::get('player/analyze-player/{id}', [PlayerAnalysisController::class, 'analyzePlayer']);
+Route::post('like-player/{playerId}', [PlayerController::class, 'likePlayer']);
+Route::get('like-count/{playerId}', [PlayerController::class, 'getLikeCount']); // Beğeni sayısını al
 
 // players routes
 Route::prefix('players')->group(function () {
@@ -48,6 +51,10 @@ Route::prefix('admin')->group(function () {
     Route::get('/user_list', [AdminController::class, 'user_list'])->name('admin.user_list');
     Route::get('/role_list', [AdminController::class, 'role_list'])->name('admin.role_list');
     Route::get('/user_fetch', [AdminController::class, 'user_fetch'])->name('admin.user_fetch');
+    Route::get('/role_fetch', [AdminController::class, 'role_fetch'])->name('admin.role_fetch');
+    Route::get('/role_create', [AdminController::class, 'role_create'])->name('admin.role_create');
+    Route::post('/role_store', [AdminController::class, 'role_store'])->name('admin.role_store');
+    Route::post('/role_delete/{id}', [AdminController::class, 'role_delete'])->name('admin.role_delete');
     Route::post('/users/status/{id}', [AdminController::class, 'user_status'])->name('admin.user_status');
     Route::post('/users/delete/{id}', [AdminController::class, 'user_delete'])->name('admin.user_delete');
 

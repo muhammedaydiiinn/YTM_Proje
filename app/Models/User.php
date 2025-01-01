@@ -50,4 +50,8 @@ class User extends Model implements AuthenticatableContract
     {
         return $this->belongsToMany(Role::class);
     }
+    public function likes()
+    {
+        return $this->hasMany(Like::class);
+    }
 }

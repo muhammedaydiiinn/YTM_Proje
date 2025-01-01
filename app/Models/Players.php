@@ -26,4 +26,9 @@ class Players extends Model
         'stats',
         'transfers'
     ];
+
+    public function likes()
+    {
+        return $this->hasMany(Like::class);
+    }
 }

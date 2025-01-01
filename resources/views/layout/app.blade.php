@@ -6,6 +6,7 @@
     <title>Sahada</title>
     <meta name="description" content="" />
     <!-- Favicon -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/x-icon" href="{{asset('assets/img/favicon/favicon.ico')}}" />
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -178,7 +179,7 @@
                         <li class="nav-item navbar-dropdown dropdown-user dropdown">
                             @guest
                                 <a class="btn btn-success" href="{{ route('login') }}">
-                                    <span class="align-middle">Log In</span>
+                                    <span class="align-middle">Giriş Yap</span>
                                 </a>
                             @else
                                 <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
@@ -222,11 +223,15 @@
                                         <div class="dropdown-divider"></div>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="#">
-                                            <i class="bx bx-power-off me-2"></i>
-                                            <span class="align-middle">Log Out</span>
-                                        </a>
+                                        <form method="POST" action="{{ route('logout') }}">
+                                            @csrf
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bx bx-power-off me-2"></i>
+                                                <span class="align-middle">Log Out</span>
+                                            </button>
+                                        </form>
                                     </li>
+
                                 </ul>
                             @endguest
                         </li>

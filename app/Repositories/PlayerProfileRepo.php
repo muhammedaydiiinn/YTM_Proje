@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\Like;
 use App\Models\Players;
 use Illuminate\Support\Facades\DB;
 use App\Models\PlayerViewCount;
@@ -16,13 +17,13 @@ class PlayerProfileRepo implements PlayerProfileRepoInt
     public function getPlayerProfilesByName(string $name)
     {
 
-       $name = strtr($name, [
-           'i' => 'İ', 'ı' => 'I', 'ş' => 'Ş',
-           'ç' => 'Ç', 'ğ' => 'Ğ', 'ö' => 'Ö',
-           'ü' => 'Ü',
-       ]);
-       $normalizedName = mb_strtoupper($name, 'UTF-8');
-       $players = Players::where('profile.name', 'LIKE', '%' . $normalizedName . '%')->get();;
+        $name = strtr($name, [
+            'i' => 'İ', 'ı' => 'I', 'ş' => 'Ş',
+            'ç' => 'Ç', 'ğ' => 'Ğ', 'ö' => 'Ö',
+            'ü' => 'Ü',
+        ]);
+        $normalizedName = mb_strtoupper($name, 'UTF-8');
+        $players = Players::where('profile.name', 'LIKE', '%' . $normalizedName . '%')->get();;
 
         if ($players->isEmpty()) {
             return null;
@@ -207,4 +208,53 @@ class PlayerProfileRepo implements PlayerProfileRepoInt
 
         return $players->isNotEmpty() ? $players : null;
     }
+
+    public function getTopPlayers()
+    {
+        $players = PlayerViewCount::orderBy('weekly_view_count', 'desc')->first();
+
+        return $players;
+    }
+
+    public function getOptions()
+    {
+        $citizenships = Players::pluck('profile.citizenship')
+            ->flatten() // Çok boyutlu array'leri düz bir array'e indirger
+            ->filter() // null veya boş olanları kaldırır
+            ->unique() // Tekrar eden değerleri kaldırır
+            ->sort() // A'dan Z'ye sıralar
+            ->values(); // Anahtarları sıfırdan indeksler
+
+        $positions = Players::pluck('profile.position.main')
+            ->filter() // null veya boş olanları kaldırır
+            ->unique() // Tekrar edenleri kaldırır
+            ->sort() // A'dan Z'ye sıralar
+            ->values(); // Düzgün bir şekilde sıfırdan indeksler
+
+        return [$citizenships , $positions];
+    }
+
+public function getPlayerProfilesLikes()
+    {
+        // MongoDB aggregate fonksiyonu kullanarak en çok beğenisi olan futbolcuyu buluyoruz
+        $player = Like::raw(function($collection) {
+            return $collection->aggregate([
+                [
+                    '$group' => [
+                        '_id' => '$player_id', // player_id ile grupla
+                        'likeCount' => ['$sum' => 1] // Her beğeni için 1 say
+                    ]
+                ],
+                [
+                    '$sort' => ['likeCount' => -1] // Beğeni sayısına göre azalan sırayla sıralama
+                ],
+                [
+                    '$limit' => 1 // En çok beğenilen futbolcuyu al
+                ]
+            ]);
+        });
+
+        return $player->isNotEmpty() ? $player : null;
+    }
+
 }

@@ -20,5 +20,6 @@ interface PlayerProfileRepoInt
 
     public function getPlayerProfiles(array $filters);
 
+    public function getPlayerDetailsById(string $id);
 
 }

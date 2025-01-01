@@ -6,6 +6,8 @@ use App\Models\Players;
 use App\Models\PlayerViewCount;
 use App\Repositories\PlayerProfileRepoInt;
 use Illuminate\Http\Request;
+use App\Models\Like;
+
 
 class PlayerController extends Controller
 {
@@ -175,6 +177,70 @@ class PlayerController extends Controller
         }
         return response()->json($profiles);
     }
+
+    public function likePlayer($playerId, Request $request)
+    {
+        if (auth()->check()) {
+            $user = auth()->user();
+
+            // Futbolcuyu bul
+            $player = $this->playerRepository->getPlayerDetailsById($playerId);
+            if ($player) {
+                // Kullanıcı daha önce beğenip beğenmediğini kontrol et
+
+                $existingLike = Like::where('user_id', $user->id)
+                    ->where('player_id', $player['profile']['id'])
+                    ->first();
+                if ($existingLike) {
+                    $existingLike->delete();
+
+                    return response()->json(['success' => true, 'message' => 'Beğeni geri alındı!']);
+                }
+
+                // Beğeni kaydını veritabanına ekle
+                Like::create([
+                    'user_id' => $user->id,
+                    'player_id' => $player['profile']['id']
+                ]);
+
+                return response()->json(['success' => true, 'message' => 'Beğeni başarıyla kaydedildi!']);
+            }
+        }
+
+        return response()->json(['success' => false, 'message' => 'Giriş yapmanız gerekiyor!']);
+    }
+
+    public function getPlayerLike()
+    {
+        $topPlayer = $this->playerRepository->getPlayerProfilesLikes();
+        $topPlayer = $topPlayer->first();
+        $topPlayerGet = $this->playerRepository->getPlayerDetailsById($topPlayer->id);
+        $apiData = [
+            'player_id' => $topPlayerGet['profile']['id'],
+            'image_url' => $topPlayerGet['profile']['imageURL'],
+            'player_name' => $topPlayerGet['profile']['name']
+        ];
+        if (!$topPlayer) {
+            return response()->json(['error' => 'No players found'], 404);
+        }
+        return response()->json($apiData);
+
+    }
+    public function getTopPlayers()
+    {
+        $topPlayer = $this->playerRepository->getTopPlayers();
+        $topPlayerGet = $this->playerRepository->getPlayerDetailsById($topPlayer->player_id);
+        $apiData = [
+            'player_id' => $topPlayer->player_id,
+            'image_url' => $topPlayer->image_url,
+            'player_name' => $topPlayerGet['profile']['name']
+        ];
+        if (!$topPlayer) {
+            return response()->json(['error' => 'No players found'], 404);
+        }
+        return response()->json($apiData);
+    }
+
 
 
 }

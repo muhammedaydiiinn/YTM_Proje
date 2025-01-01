@@ -360,6 +360,29 @@
             </div>
         @endif
 
+        <div class="like">
+            @if(Auth::check()) <!-- Kullanıcı giriş yaptıysa -->
+            <button id="like-button" onclick="toggleLike(<?php echo $playerDetails['profile']['id'] ?>)">
+                <i class="bx bx-like">
+                    <span id="like-count"></span>
+                </i>
+            </button>
+
+            @else <!-- Kullanıcı giriş yapmadıysa -->
+            <button disabled>
+                <i class="bx bx-like">
+                    <span id="like-count"></span>
+                </i>
+            </button>
+
+            @endif
+        </div>
+
+        <!-- Hata mesajı -->
+        <div id="error-message" style="display: none; color: red;">Giriş yapmadan beğeni yapamazsınız!</div>
+
+
+
         <button onclick="analyzePlayer(<?php echo $playerDetails['profile']['id']; ?>)">Analyze Player</button>
         <div id="analyse-player"></div>
     </div>
@@ -417,6 +440,54 @@
 
     </script>
 
+{{--    beğeni--}}
+    <script>
+        $(document).ready(function() {
+            const playerId = {{ $playerDetails['profile']['id'] }};
+            fetchLikeCount(playerId);
+        });
+
+        // Beğeni sayısını AJAX ile çekme
+        function fetchLikeCount(playerId) {
+            $.get(`/like-count/${playerId}`, function(response) {
+                if (response.likeCount !== undefined) {
+                    $('#like-count').text(response.likeCount);
+                }
+            });
+        }
+
+        // Beğeni işlemini başlatma veya geri alma
+        function toggleLike(playerId) {
+            $.ajax({
+                url: `/like-player/${playerId}`,
+                type: 'POST',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    player_id: playerId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Beğenildi, yeni beğeni sayısını al
+                        fetchLikeCount(playerId);
+                    } else {
+                        showError(response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showError("Bir hata oluştu, lütfen tekrar deneyin.");
+                }
+            });
+        }
+
+        function showError(message) {
+            const errorMessage = $("#error-message");
+            errorMessage.text(message);
+            errorMessage.show();
+            setTimeout(function() {
+                errorMessage.hide();
+            }, 3000); // 3 saniye sonra mesaj kaybolur
+        }
+    </script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const rowsPerPage = 10;
