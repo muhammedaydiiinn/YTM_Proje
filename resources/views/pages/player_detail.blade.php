@@ -226,6 +226,63 @@
             margin-top: 20px; /* Add some space from the previous element */
             display: none;
         }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+
+        .comments {
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+
+        .comment {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #1E2739;
+            border: 3px #1ef876;
+            border-bottom: 6px #1ef876;
+            border-style: none solid solid solid;
+            border-radius: 5px;
+        }
+
+        .comment p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .comment-card {
+            background-color: #1E2739;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+        }
+
+
+        .comment-card-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .comment-text {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .comment-time {
+            font-size: 12px;
+            color: #777;
+        }
+
     </style>
     <div class="container">
         <!-- Sol Kısım: Oyuncu Bilgileri -->
@@ -360,26 +417,54 @@
             </div>
         @endif
 
-        <div class="like">
-            @if(Auth::check()) <!-- Kullanıcı giriş yaptıysa -->
-            <button id="like-button" onclick="toggleLike(<?php echo $playerDetails['profile']['id'] ?>)">
-                <i class="bx bx-like">
-                    <span id="like-count"></span>
-                </i>
-            </button>
+        <div class="col-12">
+            <div class="like">
+                @if(Auth::check()) <!-- Kullanıcı giriş yaptıysa -->
+                <button id="like-button" onclick="toggleLike(<?php echo $playerDetails['profile']['id'] ?>)">
+                    <i class="bx bx-like">
+                        <span id="like-count"></span>
+                    </i>
+                </button>
+                @else <!-- Kullanıcı giriş yapmadıysa -->
+                <button disabled>
+                    <i class="bx bx-like">
+                        <span id="like-count"></span>
+                    </i>
+                </button>
+                @endif
+            </div>
+            <br>
+            <!-- Hata mesajı -->
+            <div id="error-message" style="display: none; color: red;">Giriş yapmadan beğeni yapamazsınız!</div>
 
-            @else <!-- Kullanıcı giriş yapmadıysa -->
-            <button disabled>
-                <i class="bx bx-like">
-                    <span id="like-count"></span>
-                </i>
-            </button>
+            <div class="comment">
+                <h3>Yorumlar</h3>
 
-            @endif
+                @if(Auth::check()) <!-- Kullanıcı giriş yaptıysa -->
+                <form id="commentForm">
+                    @csrf
+                    <input type="hidden" name="player_id" value="{{ $playerDetails['profile']['id'] }}">
+
+                    <!-- Yorum yazma alanı -->
+                    <textarea name="content" id="content" cols="30" rows="5" placeholder="Yorumunuzu buraya yazınız..." style="width: 100%; padding: 10px;"></textarea>
+
+                    <!-- Yorum gönderme butonu -->
+                    <button type="submit">
+                        Yorum Yap
+                    </button>
+                </form>
+                @else <!-- Kullanıcı giriş yapmadıysa -->
+                <p>Yorum yapabilmek için giriş yapmanız gerekiyor.</p>
+                @endif
+
+                <!-- Yorumlar listesi -->
+                <div class="comments" id="comments" style="margin-top: 20px;">
+                    <!-- Yorumlar burada dinamik olarak yüklenecek -->
+                </div>
+            </div>
+
         </div>
 
-        <!-- Hata mesajı -->
-        <div id="error-message" style="display: none; color: red;">Giriş yapmadan beğeni yapamazsınız!</div>
 
 
 
@@ -387,6 +472,153 @@
         <div id="analyse-player"></div>
     </div>
 
+    <script>
+        // Yorumları getiren fonksiyon
+        function loadComments(playerId) {
+            fetch(`/player/${playerId}/comments/`)
+                .then(response => response.json())
+                .then(data => {
+                    const commentsContainer = document.getElementById('comments');
+                    commentsContainer.innerHTML = ''; // Önceden gelen yorumları temizle
+                    // JavaScript içinde currentUserId değişkeni
+                    let currentUserId = "<?php echo (Auth::check()) ? Auth::user()->id : 'null'; ?>";
+
+
+                    // Yorumları döngü ile ekleyin
+                    data.forEach(comment => {
+                        const commentElement = document.createElement('div');
+                        commentElement.classList.add('comment-card'); // Kart sınıfı ekliyoruz
+                        commentElement.setAttribute('data-comment-id', comment.id); // Yorum ID'sini ekliyoruz
+                        commentElement.innerHTML = `
+                        <div class="comment-card-content">
+                            <p class="comment-text">${comment.content}</p>
+                            <p class="comment-time">${new Date(comment.created_at).toLocaleString()}</p>
+                            ${comment.user_id == currentUserId ? '<button onclick="deleteComment(\'' + comment.id + '\')">Sil</button>' : ''}
+                        </div>
+                    `;
+                        commentsContainer.appendChild(commentElement);
+                    });
+                })
+                .catch(error => {
+                    console.error('Yorumlar yüklenirken bir hata oluştu:', error);
+                });
+        }
+
+        // Yorum silme fonksiyonu
+        function deleteComment(commentId) {
+            const playerId = document.querySelector('input[name="player_id"]').value;
+
+            // Silme işlemini yap (POST metoduyla)
+            fetch(`/player/comment/${commentId}/delete`, {
+                method: 'POST',  // Metod POST olarak değiştirildi
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ player_id: playerId, comment_id: commentId })  // Gerekli parametreleri ekleyelim
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Yorum başarıyla silindi!',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+
+                        // Yorumun DOM'dan kaldırılması
+                        const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
+                        if (commentElement) {
+                            commentElement.remove();
+                        }
+
+                        // Yorumları tekrar yükle
+                        loadComments(playerId);
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: data.message || 'Yorum silinemedi.',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Yorum silinirken bir hata oluştu:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Bir hata oluştu.',
+                        text: 'Lütfen tekrar deneyin.',
+                        showConfirmButton: true
+                    });
+                });
+        }
+
+        // Yorum formunu gönderme işlemi
+        document.getElementById('commentForm')?.addEventListener('submit', function(event) {
+            event.preventDefault(); // Formun normal şekilde gönderilmesini engelle
+
+            const playerId = document.querySelector('input[name="player_id"]').value;
+            const content = document.getElementById('content').value.trim(); // Boşlukları temizle
+
+            // Kullanıcı giriş yapmadıysa veya içerik boşsa uyarı göster
+            if (!content) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Lütfen yorumunuzu girin!',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+                return;
+            }
+
+            // Yorum verisini gönder
+            fetch(`/player/${playerId}/comment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ player_id: playerId, content: content })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Yorum başarıyla kaydedildi!',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                        document.getElementById('content').value = ''; // Formu temizle
+                        loadComments(playerId); // Yeni yorum eklendikten sonra yorumları yenile
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: data.message || 'Yorum kaydedilemedi.',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Yorum kaydedilirken bir hata oluştu:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Bir hata oluştu.',
+                        text: 'Lütfen tekrar deneyin.',
+                        showConfirmButton: true
+                    });
+                });
+        });
+
+        // Sayfa yüklendiğinde yorumları yükle
+        document.addEventListener('DOMContentLoaded', function() {
+            const playerId = <?php echo $playerDetails['profile']['id']; ?>;
+            loadComments(playerId);
+        });
+    </script>
 
 
 

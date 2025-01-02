@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Comment;
 use App\Models\Players;
 use App\Models\PlayerViewCount;
+use App\Models\User;
 use App\Repositories\PlayerProfileRepoInt;
 use Illuminate\Http\Request;
 use App\Models\Like;
@@ -246,7 +248,65 @@ class PlayerController extends Controller
         return response()->json($apiData);
     }
 
+    public function storeComment($playerId, Request $request)
+    {
+        if (auth()->check()) {
+            $user = auth()->user();
+            // Futbolcuyu bul
+            $player = $this->playerRepository->getPlayerDetailsById($playerId);
+            if ($player) {
+                // Yorum içeriğini al
+                $content = $request->input('content');
+                if (!empty($content)) {
 
+                    // Yorum oluştur ve kaydet
+                    Comment::create([
+                        'user_id' => $user->id,
+                        'player_id' => $player['profile']['id'],
+                        'content' => $content
+                    ]);
+                    // Başarılı mesajı
+                    return response()->json(['success' => true, 'message' => 'Yorum başarıyla kaydedildi!']);
+
+                }
+            }
+        }
+
+        return response()->json(['success' => false, 'message' => 'Giriş yapmanız gerekiyor!']);
+    }
+
+    public function deleteComment($commentId)
+    {
+        if (auth()->check()) {
+            $user = auth()->user();
+            // Yorumu bul
+            $comment = Comment::find($commentId);
+            if ($comment) {
+                // Yorumu sadece yorumu yapan kullanıcı silebilir
+                if ($comment->user_id === $user->id) {
+                    $comment->delete();
+                    return response()->json(['success' => true, 'message' => 'Yorum başarıyla silindi!']);
+                }
+            }
+        }
+
+        return response()->json(['success' => false, 'message' => 'Yorumu silemezsiniz!']);
+    }
+    public function getPlayerComments($playerId)
+    {
+        // Yorumları ve kullanıcıları çek
+        $comments = Comment::where('player_id', $playerId)->get();
+        $users = User::whereIn('id', $comments->pluck('user_id'))->get()->keyBy('id');
+
+        // Her bir yoruma user_name ekle
+        $commentsWithUserName = $comments->map(function ($comment) use ($users) {
+            $comment->user_name = $users[$comment->user_id]->name ?? 'Unknown';
+            return $comment;
+        });
+
+        // JSON olarak geri döndür
+        return response()->json($commentsWithUserName);
+    }
 
 }
 

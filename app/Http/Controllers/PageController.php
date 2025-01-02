@@ -29,7 +29,21 @@ class PageController extends Controller
         $imageURLTopPlayer = $topPlayer->image_url;
         $topPlayer = $this->playerRepository->getPlayerDetailsById($playerId);
 
-        return view('pages.index', compact('topPlayer', 'imageURLTopPlayer'));
+        $topPlayerLike = $this->playerRepository->getPlayerProfilesLikes();
+        if ($topPlayerLike) {
+            $topPlayerLike = $topPlayerLike->first();
+            $topPlayerGet = $this->playerRepository->getPlayerDetailsById($topPlayerLike->id);
+            $apiData = [
+                'player_id' => $topPlayerGet['profile']['id'],
+                'image_url' => $topPlayerGet['profile']['imageURL'],
+                'player_name' => $topPlayerGet['profile']['name']
+            ];
+        }
+        else{
+            $apiData = null;
+        }
+
+        return view('pages.index', compact('topPlayer', 'imageURLTopPlayer', 'apiData'));
     }
 
 

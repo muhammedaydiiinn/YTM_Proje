@@ -30,6 +30,9 @@ Route::get('/get-player-like', [PlayerController::class, 'getPlayerLike'])->name
 Route::get('player/analyze-player/{id}', [PlayerAnalysisController::class, 'analyzePlayer']);
 Route::post('like-player/{playerId}', [PlayerController::class, 'likePlayer']);
 Route::get('like-count/{playerId}', [PlayerController::class, 'getLikeCount']); // Beğeni sayısını al
+Route::get('/player/{playerId}/comments', [PlayerController::class, 'getPlayerComments'])->name('comments.get');
+Route::post('/player/{playerId}/comment', [PlayerController::class, 'storeComment'])->name('comment.store');
+Route::post('/player/comment/{commentId}/delete', [PlayerController::class, 'deleteComment'])->name('comment.delete');
 
 // players routes
 Route::prefix('players')->group(function () {
@@ -57,5 +60,4 @@ Route::prefix('admin')->group(function () {
     Route::post('/role_delete/{id}', [AdminController::class, 'role_delete'])->name('admin.role_delete');
     Route::post('/users/status/{id}', [AdminController::class, 'user_status'])->name('admin.user_status');
     Route::post('/users/delete/{id}', [AdminController::class, 'user_delete'])->name('admin.user_delete');
-
 });
