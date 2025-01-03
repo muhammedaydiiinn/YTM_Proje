@@ -246,10 +246,11 @@
             margin-bottom: 15px;
             padding: 10px;
             background-color: #1E2739;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.5);
             border: 3px #1ef876;
             border-bottom: 6px #1ef876;
             border-style: none solid solid solid;
-            border-radius: 5px;
+            border-radius: 15px;
         }
 
         .comment p {
@@ -281,6 +282,11 @@
         .comment-time {
             font-size: 12px;
             color: #777;
+        }
+
+        .delete-comment {
+            max-width: 110px;
+            align-self: flex-end;
         }
 
     </style>
@@ -380,7 +386,7 @@
                         <tr>
                             <td>
                                 @if(!empty($season['competitionID']))
-                                    <img src="https://tmssl.akamaized.net//images/logo/medium/{{ strtolower($season['competitionID']) }}.png" alt="Competition Logo" style="height: 20px; background-color: #FFFFFF; border-radius: 3px;">
+                                    <img src="https://tmssl.akamaized.net//images/logo/medium/{{ strtolower($season['competitionID']) }}.png" alt="Competition Logo" style="height: 24px; background-color: #FFFFFF; border-radius: 3px; padding: 2px">
                                 @else
                                     -
                                 @endif
@@ -388,7 +394,7 @@
                             <td>{{ $season['seasonID'] ?? '-' }}</td>
                             <td>
                                 @if(!empty($season['clubID']))
-                                    <img src="https://tmssl.akamaized.net/images/wappen/head/{{ $season['clubID'] }}.png" alt="Club Logo" style="height: 20px; background-color: #FFFFFF; border-radius: 3px">
+                                    <img src="https://tmssl.akamaized.net/images/wappen/head/{{ $season['clubID'] }}.png" alt="Club Logo" style="height: 24px; background-color: #FFFFFF; border-radius: 3px; padding: 2px">
                                 @else
                                     -
                                 @endif
@@ -482,7 +488,7 @@
                     commentsContainer.innerHTML = ''; // Önceden gelen yorumları temizle
                     // JavaScript içinde currentUserId değişkeni
                     let currentUserId = "<?php echo (Auth::check()) ? Auth::user()->id : 'null'; ?>";
-
+                    console.log(data);
 
                     // Yorumları döngü ile ekleyin
                     data.forEach(comment => {
@@ -490,14 +496,20 @@
                         commentElement.classList.add('comment-card'); // Kart sınıfı ekliyoruz
                         commentElement.setAttribute('data-comment-id', comment.id); // Yorum ID'sini ekliyoruz
                         commentElement.innerHTML = `
-                        <div class="comment-card-content">
-                            <p class="comment-text">${comment.content}</p>
-                            <p class="comment-time">${new Date(comment.created_at).toLocaleString()}</p>
-                            ${comment.user_id == currentUserId ? '<button onclick="deleteComment(\'' + comment.id + '\')">Sil</button>' : ''}
-                        </div>
-                    `;
+                                <div class="row comment-card-header">
+                                    <div class="col-10">
+                                        <p class="comment-text">${comment.content}</p>
+                                        <p class="comment-time">${new Date(comment.created_at).toLocaleString()} ---- ${comment.user_name}</p>
+                                    </div>
+                                    <div class="col-2 text-end">
+                                        ${comment.user_id == currentUserId ? '<button class="delete-button btn btn-sm btn-danger" onclick="deleteComment(\'' + comment.id + '\')">Sil</button>' : ''}
+                                    </div>
+                                </div>
+                            `;
+
                         commentsContainer.appendChild(commentElement);
                     });
+
                 })
                 .catch(error => {
                     console.error('Yorumlar yüklenirken bir hata oluştu:', error);
@@ -795,13 +807,21 @@
             const lineChartConfig = {
                 chart: {
                     height: 400,
-                    type: 'line',
+                    type: 'area', // Grafik türü 'area'
                     parentHeightOffset: 0,
                     zoom: {
                         enabled: false
                     },
                     toolbar: {
                         show: false
+                    },
+                    dropShadow: {
+                        enabled: true,
+                        top: 35,
+                        left: 0,
+                        blur: 30,
+                        color: '#1ef876',
+                        opacity: 0.4 // Gölge opaklık
                     }
                 },
                 series: [
@@ -812,7 +832,7 @@
                 ],
                 markers: {
                     size: 5,
-                    colors: ['#FFA500'],
+                    colors: ['#1ef876'],
                     strokeColors: '#fff',
                     strokeWidth: 2,
                     hover: {
@@ -823,7 +843,22 @@
                     enabled: false
                 },
                 stroke: {
-                    curve: 'smooth'
+                    curve: 'smooth',
+                    colors: ['#1ef876'], // Çizgi rengi
+                    width: 2
+                },
+                fill: {
+                    type: 'gradient', // Alt dolgu için degrade efekti
+                    gradient: {
+                        shade: 'dark',
+                        type: 'vertical',
+                        shadeIntensity: 0.5,
+                        gradientToColors: ['#1ef876'], // Alt alan rengi
+                        inverseColors: false,
+                        opacityFrom: 0.4, // Çizgiye yakın alan opaklığı
+                        opacityTo: 0, // Alt kısımda tamamen şeffaf
+                        stops: [0, 100]
+                    }
                 },
                 xaxis: {
                     categories: categories,
@@ -861,12 +896,12 @@
                 tooltip: {
                     custom: function({ series, seriesIndex, dataPointIndex }) {
                         return `
-                        <div style="padding: 10px; text-align: center; background-color: #1a202c;">
-                          <img src="${clubIcons[dataPointIndex]}" alt="Club Icon" style="width: 30px; height: 40px; margin-bottom: 5px;" />
-                          <div><strong>${categories[dataPointIndex]}</strong></div>
-                          <div>Market Değeri: €${series[seriesIndex][dataPointIndex].toLocaleString()}</div>
-                        </div>
-                      `;
+            <div style="padding: 10px; text-align: center; background-color: #1a202c;">
+              <img src="${clubIcons[dataPointIndex]}" alt="Club Icon" style="width: 30px; height: 40px; margin-bottom: 5px;" />
+              <div><strong>${categories[dataPointIndex]}</strong></div>
+              <div>Market Değeri: €${series[seriesIndex][dataPointIndex].toLocaleString()}</div>
+            </div>
+          `;
                     }
                 }
             };
@@ -876,6 +911,7 @@
                 const lineChart = new ApexCharts(lineChartEl, lineChartConfig);
                 lineChart.render();
             }
+
 
         </script>
     @endif
