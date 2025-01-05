@@ -9,153 +9,126 @@ use App\Models\User;
 use App\Repositories\PlayerProfileRepoInt;
 use Illuminate\Http\Request;
 use App\Models\Like;
+use App\Services\PlayerService;
 
 
 class PlayerController extends Controller
 {
     protected $playerRepository;
+    protected $playerService;
 
-    // Dependency Injection PageController sınıfına, PlayerProfileRepoInt bağımlılığı constructor üzerinden enjekte ediliyor:
-    //Bu sayede, PageController doğrudan bir PlayerProfileRepoInt sınıfına bağlı kalmaz, sadece arayüzü tanır.
-
-    public function __construct(PlayerProfileRepoInt $playerRepository)
+    public function __construct(PlayerProfileRepoInt $playerRepository, PlayerService $playerService)
     {
         $this->playerRepository = $playerRepository;
+        $this->playerService = $playerService;
     }
 
     public function getPlayerProfilesById(Request $request)
     {
-        $id = $request->input('id'); // İstekten id'yi al
-        $profile = $this->playerRepository->getPlayerDetailsById($id);
-
+        $profile = $this->playerService->getPlayerById($request->input('id'));
+        
         if (!$profile) {
             return response()->json(['error' => 'Player not found'], 404);
         }
-
         return response()->json($profile);
-
     }
+    
     public function getPlayerProfilesByName(Request $request)
     {
-        $name = $request->input('name');
-
-        // Adına göre ilk 10 profili alıyoruz
-        $profiles = $this->playerRepository->getPlayerProfilesByName($name);
-
+        $profiles = $this->playerService->searchPlayersByName($request->input('name'));
+        
         if (!$profiles || $profiles->isEmpty()) {
             return response()->json(['error' => 'No players found'], 404);
         }
-
         return response()->json($profiles);
     }
 
     public function getPlayerProfilesByAgeRange(Request $request)
     {
-        $minAge = $request->input('min_age'); // Minimum yaş verisini al
-        $maxAge = $request->input('max_age'); // Maksimum yaş verisini al
-
-        // Belirtilen yaş aralığındaki oyuncuları alıyoruz
-        $profiles = $this->playerRepository->getPlayerProfilesByAgeRange($minAge, $maxAge);
-
+        $profiles = $this->playerService->searchPlayersByAgeRange(
+            $request->input('min_age'),
+            $request->input('max_age')
+        );
+        
         if (!$profiles || $profiles->isEmpty()) {
             return response()->json(['error' => 'No players found'], 404);
         }
-
         return response()->json($profiles);
     }
 
     public function getPlayerProfileByMainPosition(Request $request)
     {
-        $position = $request->input('position'); // Pozisyon verisini istekten al
-        $profile = $this->playerRepository->getPlayerProfileByMainPosition($position);
-
+        $profile = $this->playerService->searchPlayersByPosition($request->input('position'));
+        
         if (!$profile) {
             return response()->json(['error' => 'Player not found'], 404);
         }
-
         return response()->json($profile);
     }
 
     public function getPlayerProfilesByNationality(Request $request)
     {
-        $nationality = $request->input('nationality'); // Milliyeti istekten al
-        $profiles = $this->playerRepository->getPlayerProfilesByNationality($nationality);
-
+        $profiles = $this->playerService->searchPlayersByNationality($request->input('nationality'));
+        
         if (!$profiles || $profiles->isEmpty()) {
             return response()->json(['error' => 'No players found'], 404);
         }
-
         return response()->json($profiles);
     }
 
     public function getPlayerProfilesByClub(Request $request)
     {
-        $clubName = $request->input('club'); // İstekten takım adını al
-
-        $profiles = $this->playerRepository->getPlayerProfilesByClub($clubName);
-
+        $profiles = $this->playerService->searchPlayersByClub($request->input('club'));
+        
         if (!$profiles || $profiles->isEmpty()) {
             return response()->json(['error' => 'No players found'], 404);
         }
-
         return response()->json($profiles);
     }
 
-
     public function getPlayerProfilesByFoot(Request $request)
     {
-        $foot = $request->input('foot'); // Oyuncunun kullandığı ayağı istekten al
-        $profiles = $this->playerRepository->getPlayerProfilesByFoot($foot);
-
+        $profiles = $this->playerService->searchPlayersByFoot($request->input('foot'));
+        
         if (!$profiles || $profiles->isEmpty()) {
             return response()->json(['error' => 'No players found'], 404);
         }
-
         return response()->json($profiles);
     }
 
     public function getPlayerProfiles(Request $request)
     {
-        $filters = $request->only(['name', 'min_age', 'max_age', 'position', 'nationality', 'club', 'foot', 'min_marketvalue', 'max_marketvalue']);
+        $filters = $request->only([
+            'name', 'min_age', 'max_age', 'position', 
+            'nationality', 'club', 'foot', 
+            'min_marketvalue', 'max_marketvalue'
+        ]);
 
-        $profiles = $this->playerRepository->getPlayerProfiles($filters);
-
+        $profiles = $this->playerService->searchPlayersByFilters($filters);
+        
         if (!$profiles || $profiles->isEmpty()) {
-            // 404 yerine error mesajı gönder
             return response()->json(['error' => 'Hiç oyuncu bulunamadı.']);
         }
-
         return response()->json($profiles);
     }
 
     public function getPlayerProfilesByMarketValue(Request $request)
     {
-        $minMarketValue = floatval($request->input('min_marketvalue'));
-        $maxMarketValue = floatval($request->input('max_marketvalue'));
-
-        $profiles = $this->playerRepository->getPlayerProfilesByMarketValueRange($minMarketValue, $maxMarketValue);
-
+        $profiles = $this->playerService->searchPlayersByMarketValue(
+            floatval($request->input('min_marketvalue')),
+            floatval($request->input('max_marketvalue'))
+        );
+        
         if (!$profiles || $profiles->isEmpty()) {
             return response()->json(['error' => 'No players found'], 404);
         }
         return response()->json($profiles);
     }
 
-    function increase_view_count($id)
-    {
-        $viewCountEntry = PlayerViewCount::where('player_id', $id)->first();
-
-        if ($viewCountEntry) {
-            $viewCountEntry->increment('view_count');
-        } else {
-            PlayerViewCount::create(['player_id' => $id, 'view_count' => 1]);
-        }
-    }
     public function player_detail($id)
     {
-        $this->increase_view_count($id);
-        // Örnek olarak bir repository'den verileri alıyoruz.
-        $playerDetails = $this->playerRepository->getPlayerDetailsById($id);
+        $this->playerService->increaseViewCount($id);
+        $playerDetails = $this->playerService->getPlayerById($id);
 
         if (!$playerDetails) {
             abort(404, 'Player not found');
@@ -166,148 +139,98 @@ class PlayerController extends Controller
 
     public function live_search(Request $request)
     {
-        $query = $request->input('query');
-        $players = $this->playerRepository->getPlayerProfilesByName($query);
-        return response()->json($players);
+        return response()->json(
+            $this->playerService->searchPlayersByName($request->input('query'))
+        );
     }
 
     public function getPlayerView()
     {
-        $profiles = $this->playerRepository->getPlayerProfilesView();
+        $profiles = $this->playerService->getPlayerProfilesView();
+        
         if (!$profiles || $profiles->isEmpty()) {
             return response()->json(['error' => 'No players found'], 404);
         }
         return response()->json($profiles);
     }
 
-    public function likePlayer($playerId, Request $request)
-    {
-        if (auth()->check()) {
-            $user = auth()->user();
-
-            // Futbolcuyu bul
-            $player = $this->playerRepository->getPlayerDetailsById($playerId);
-            if ($player) {
-                // Kullanıcı daha önce beğenip beğenmediğini kontrol et
-
-                $existingLike = Like::where('user_id', $user->id)
-                    ->where('player_id', $player['profile']['id'])
-                    ->first();
-                if ($existingLike) {
-                    $existingLike->delete();
-
-                    return response()->json(['success' => true, 'message' => 'Beğeni geri alındı!']);
-                }
-
-                // Beğeni kaydını veritabanına ekle
-                Like::create([
-                    'user_id' => $user->id,
-                    'player_id' => $player['profile']['id']
-                ]);
-
-                return response()->json(['success' => true, 'message' => 'Beğeni başarıyla kaydedildi!']);
-            }
-        }
-
-        return response()->json(['success' => false, 'message' => 'Giriş yapmanız gerekiyor!']);
-    }
-
     public function getPlayerLike()
     {
-        $topPlayer = $this->playerRepository->getPlayerProfilesLikes();
-        $topPlayer = $topPlayer->first();
-        $topPlayerGet = $this->playerRepository->getPlayerDetailsById($topPlayer->id);
-        $apiData = [
-            'player_id' => $topPlayerGet['profile']['id'],
-            'image_url' => $topPlayerGet['profile']['imageURL'],
-            'player_name' => $topPlayerGet['profile']['name']
-        ];
+        $topPlayer = $this->playerService->getTopLikedPlayer();
+        
         if (!$topPlayer) {
             return response()->json(['error' => 'No players found'], 404);
         }
-        return response()->json($apiData);
-
+        return response()->json($topPlayer);
     }
+
     public function getLikeCount($playerId)
     {
-        $likeCount = Like::where('player_id', $playerId)->count();
-        return response()->json(['likeCount' => $likeCount]);
+        return response()->json([
+            'likeCount' => $this->playerService->getPlayerLikeCount($playerId)
+        ]);
     }
+
     public function getTopPlayers()
     {
-        $topPlayer = $this->playerRepository->getTopPlayers();
-        $topPlayerGet = $this->playerRepository->getPlayerDetailsById($topPlayer->player_id);
-        $apiData = [
-            'player_id' => $topPlayer->player_id,
-            'image_url' => $topPlayer->image_url,
-            'player_name' => $topPlayerGet['profile']['name']
-        ];
+        $topPlayer = $this->playerService->getTopPlayer();
+        
         if (!$topPlayer) {
             return response()->json(['error' => 'No players found'], 404);
         }
-        return response()->json($apiData);
+        return response()->json($topPlayer);
     }
 
     public function storeComment($playerId, Request $request)
     {
-        if (auth()->check()) {
-            $user = auth()->user();
-            // Futbolcuyu bul
-            $player = $this->playerRepository->getPlayerDetailsById($playerId);
-            if ($player) {
-                // Yorum içeriğini al
-                $content = $request->input('content');
-                if (!empty($content)) {
-
-                    // Yorum oluştur ve kaydet
-                    Comment::create([
-                        'user_id' => $user->id,
-                        'player_id' => $player['profile']['id'],
-                        'content' => $content
-                    ]);
-                    // Başarılı mesajı
-                    return response()->json(['success' => true, 'message' => 'Yorum başarıyla kaydedildi!']);
-
-                }
-            }
+        if (!auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Yorum yapmak için giriş yapmalısınız!'
+            ]);
         }
 
-        return response()->json(['success' => false, 'message' => 'Giriş yapmanız gerekiyor!']);
+        $result = $this->playerService->handleComment(
+            $playerId,
+            auth()->id(),
+            $request->input('content'),
+            $request->input('parent_id')
+        );
+
+        return response()->json($result);
     }
 
     public function deleteComment($commentId)
     {
-        if (auth()->check()) {
-            $user = auth()->user();
-            // Yorumu bul
-            $comment = Comment::find($commentId);
-            if ($comment) {
-                // Yorumu sadece yorumu yapan kullanıcı silebilir
-                if ($comment->user_id === $user->id) {
-                    $comment->delete();
-                    return response()->json(['success' => true, 'message' => 'Yorum başarıyla silindi!']);
-                }
-            }
+        if (!auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bu işlem için giriş yapmalısınız!'
+            ]);
         }
 
-        return response()->json(['success' => false, 'message' => 'Yorumu silemezsiniz!']);
+        $result = $this->playerService->deleteComment($commentId, auth()->id());
+        return response()->json($result);
     }
+
     public function getPlayerComments($playerId)
     {
-        // Yorumları ve kullanıcıları çek
-        $comments = Comment::where('player_id', $playerId)->get();
-        $users = User::whereIn('id', $comments->pluck('user_id'))->get()->keyBy('id');
-
-        // Her bir yoruma user_name ekle
-        $commentsWithUserName = $comments->map(function ($comment) use ($users) {
-            $comment->user_name = $users[$comment->user_id]->name ?? 'Unknown';
-            return $comment;
-        });
-
-        // JSON olarak geri döndür
-        return response()->json($commentsWithUserName);
+        $result = $this->playerService->getPlayerComments($playerId);
+        return response()->json($result);
     }
 
+    public function likePlayer($playerId)
+    {
+        if (!auth()->check()) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Giriş yapmanız gerekiyor!'
+            ]);
+        }
+
+        $result = $this->playerService->handlePlayerLike($playerId, auth()->id());
+        return response()->json($result);
+    }
 }
 
 

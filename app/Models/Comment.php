@@ -7,12 +7,25 @@ use MongoDB\Laravel\Eloquent\Model;
 
 class Comment extends Model
 {
-    use HasFactory;
-    protected $connection = 'mongodb'; // MongoDB kullanıyoruz
+    protected $fillable = [
+        'user_id',
+        'player_id',
+        'content',
+        'parent_id'
+    ];
 
-    protected $fillable = ['user_id', 'player_id','content'];
+    protected $with = ['user'];
 
-    // İlişki tanımlamaları
+    public function replies()
+    {
+        return $this->hasMany(Comment::class, 'parent_id');
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Comment::class, 'parent_id');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -20,6 +33,11 @@ class Comment extends Model
 
     public function player()
     {
-        return $this->belongsTo(Players::class);
+        return $this->belongsTo(Player::class);
+    }
+
+    public function isReply(): bool
+    {
+        return $this->parent_id !== null;
     }
 }

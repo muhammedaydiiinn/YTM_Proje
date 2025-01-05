@@ -290,6 +290,88 @@
         }
 
     </style>
+    <style>
+        .comments-section {
+            background-color: #1E2739;
+            border: 3px #1ef876;
+            border-bottom: 6px #1ef876;
+            border-style: none solid solid solid;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .comment-form textarea {
+            background-color: #1f2d44;
+            color: #ffffff;
+            border: 1px solid #1ef876;
+            border-radius: 5px;
+        }
+
+        .comment-form textarea:focus {
+            background-color: #1f2d44;
+            color: #ffffff;
+            border-color: #1ef876;
+            box-shadow: 0 0 0 0.2rem rgba(30, 248, 118, 0.25);
+        }
+
+        .comment-card {
+            background-color: #1f2d44;
+            border: none;
+            border-left: 3px solid #1ef876;
+            margin-bottom: 15px;
+            transition: transform 0.2s;
+        }
+
+        .comment-card:hover {
+            transform: translateX(5px);
+        }
+
+        .reply-card {
+            background-color: #1E2739;
+            border-left: 3px solid #1ef876;
+            margin-left: 30px;
+            padding: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .comment-actions button {
+            font-size: 0.9rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .reply-form {
+            margin-left: 30px;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #1E2739;
+            border-radius: 5px;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .comment-user {
+            color: #1ef876;
+            font-weight: bold;
+        }
+
+        .comment-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
     <div class="container">
         <!-- Sol Kısım: Oyuncu Bilgileri -->
         <div class="player-details">
@@ -424,51 +506,46 @@
         @endif
 
         <div class="col-12">
-            <div class="like">
-                @if(Auth::check()) <!-- Kullanıcı giriş yaptıysa -->
-                <button id="like-button" onclick="toggleLike(<?php echo $playerDetails['profile']['id'] ?>)">
-                    <i class="bx bx-like">
-                        <span id="like-count"></span>
-                    </i>
-                </button>
-                @else <!-- Kullanıcı giriş yapmadıysa -->
-                <button disabled>
-                    <i class="bx bx-like">
-                        <span id="like-count"></span>
-                    </i>
-                </button>
+            <!-- Beğeni Bölümü -->
+            <div class="like-section">
+                @if(Auth::check())
+                    <button id="like-button" class="btn btn-primary" onclick="toggleLike({{ $playerDetails['profile']['id'] }})">
+                        <i class="bx bx-like"></i>
+                        <span id="like-count">0</span>
+                    </button>
+                @else
+                    <button class="btn btn-primary" disabled>
+                        <i class="bx bx-like"></i>
+                        <span id="like-count">0</span>
+                    </button>
+                    <small class="text-muted">Beğenmek için giriş yapın</small>
                 @endif
             </div>
-            <br>
-            <!-- Hata mesajı -->
-            <div id="error-message" style="display: none; color: red;">Giriş yapmadan beğeni yapamazsınız!</div>
 
-            <div class="comment">
-                <h3>Yorumlar</h3>
+            <!-- Yorum Bölümü -->
+            <div class="comments-section">
+                <h4 class="text-white mb-4">Yorumlar</h4>
 
-                @if(Auth::check()) <!-- Kullanıcı giriş yaptıysa -->
-                <form id="commentForm">
-                    @csrf
-                    <input type="hidden" name="player_id" value="{{ $playerDetails['profile']['id'] }}">
-
-                    <!-- Yorum yazma alanı -->
-                    <textarea name="content" id="content" cols="30" rows="5" placeholder="Yorumunuzu buraya yazınız..." style="width: 100%; padding: 10px;"></textarea>
-
-                    <!-- Yorum gönderme butonu -->
-                    <button type="submit">
-                        Yorum Yap
-                    </button>
-                </form>
-                @else <!-- Kullanıcı giriş yapmadıysa -->
-                <p>Yorum yapabilmek için giriş yapmanız gerekiyor.</p>
+                @if(Auth::check())
+                    <div class="comment-form mb-4">
+                        <textarea id="comment-input" 
+                                 class="form-control mb-2" 
+                                 rows="3" 
+                                 placeholder="Yorumunuzu yazın..."></textarea>
+                        <button class="btn btn-primary" onclick="submitComment()">
+                            <i class="fas fa-paper-plane me-2"></i>Yorum Yap
+                        </button>
+                    </div>
+                @else
+                    <div class="alert alert-info">
+                        Yorum yapabilmek için <a href="{{ route('login') }}" class="text-primary">giriş</a> yapmalısınız.
+                    </div>
                 @endif
 
-                <!-- Yorumlar listesi -->
-                <div class="comments" id="comments" style="margin-top: 20px;">
-                    <!-- Yorumlar burada dinamik olarak yüklenecek -->
+                <div id="comments-container">
+                    <!-- Yorumlar dinamik olarak buraya yüklenecek -->
                 </div>
             </div>
-
         </div>
 
 
@@ -479,157 +556,290 @@
     </div>
 
     <script>
-        // Yorumları getiren fonksiyon
-        function loadComments(playerId) {
-            fetch(`/player/${playerId}/comments/`)
-                .then(response => response.json())
-                .then(data => {
-                    const commentsContainer = document.getElementById('comments');
-                    commentsContainer.innerHTML = ''; // Önceden gelen yorumları temizle
-                    // JavaScript içinde currentUserId değişkeni
-                    let currentUserId = "<?php echo (Auth::check()) ? Auth::user()->id : 'null'; ?>";
-                    console.log(data);
+        const currentUserId = '{{ Auth::id() ?? 'null' }}';
+        const playerId = {{ $playerDetails['profile']['id'] }};
 
-                    // Yorumları döngü ile ekleyin
-                    data.forEach(comment => {
-                        const commentElement = document.createElement('div');
-                        commentElement.classList.add('comment-card'); // Kart sınıfı ekliyoruz
-                        commentElement.setAttribute('data-comment-id', comment.id); // Yorum ID'sini ekliyoruz
-                        commentElement.innerHTML = `
-                                <div class="row comment-card-header">
-                                    <div class="col-10">
-                                        <p class="comment-text">${comment.content}</p>
-                                        <p class="comment-time">${new Date(comment.created_at).toLocaleString()} ---- ${comment.user_name}</p>
-                                    </div>
-                                    <div class="col-2 text-end">
-                                        ${comment.user_id == currentUserId ? '<button class="delete-button btn btn-sm btn-danger" onclick="deleteComment(\'' + comment.id + '\')">Sil</button>' : ''}
-                                    </div>
-                                </div>
-                            `;
+        // Sayfa yüklendiğinde çalışacak fonksiyonlar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadComments();
+            updateLikeCount();
+        });
 
-                        commentsContainer.appendChild(commentElement);
-                    });
-
-                })
-                .catch(error => {
-                    console.error('Yorumlar yüklenirken bir hata oluştu:', error);
-                });
-        }
-
-        // Yorum silme fonksiyonu
-        function deleteComment(commentId) {
-            const playerId = document.querySelector('input[name="player_id"]').value;
-
-            // Silme işlemini yap (POST metoduyla)
-            fetch(`/player/comment/${commentId}/delete`, {
-                method: 'POST',  // Metod POST olarak değiştirildi
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({ player_id: playerId, comment_id: commentId })  // Gerekli parametreleri ekleyelim
-            })
+        // Yorumları yükleme fonksiyonu
+        function loadComments() {
+            fetch(`/player/${playerId}/getComments`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Yorum başarıyla silindi!',
-                            showConfirmButton: false,
-                            timer: 1500
-                        });
-
-                        // Yorumun DOM'dan kaldırılması
-                        const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
-                        if (commentElement) {
-                            commentElement.remove();
-                        }
-
-                        // Yorumları tekrar yükle
-                        loadComments(playerId);
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: data.message || 'Yorum silinemedi.',
-                            showConfirmButton: false,
-                            timer: 1500
+                        const commentsContainer = document.getElementById('comments-container');
+                        commentsContainer.innerHTML = '';
+                        
+                        data.comments.forEach(comment => {
+                            const commentElement = createCommentElement(comment);
+                            commentsContainer.appendChild(commentElement);
                         });
                     }
                 })
-                .catch(error => {
-                    console.error('Yorum silinirken bir hata oluştu:', error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Bir hata oluştu.',
-                        text: 'Lütfen tekrar deneyin.',
-                        showConfirmButton: true
-                    });
-                });
+                .catch(error => console.error('Error loading comments:', error));
         }
 
-        // Yorum formunu gönderme işlemi
-        document.getElementById('commentForm')?.addEventListener('submit', function(event) {
-            event.preventDefault(); // Formun normal şekilde gönderilmesini engelle
+        // Yorum elementi oluşturma fonksiyonu
+        function createCommentElement(comment) {
+            const div = document.createElement('div');
+            div.className = 'comment-card';
+            div.innerHTML = `
+                <div class="comment-card-content p-3">
+                    <div class="comment-header">
+                        <span class="comment-user">${comment.user_name}</span>
+                        <span class="comment-date">${comment.created_at}</span>
+                    </div>
+                    <p class="comment-text text-white">${comment.content}</p>
+                    <div class="comment-actions">
+                        ${currentUserId ? `
+                            <button class="btn btn-sm btn-outline-light" 
+                                    onclick="showReplyForm(${comment.id})">
+                                <i class="fas fa-reply me-1"></i>Yanıtla
+                            </button>
+                        ` : ''}
+                        ${comment.user_id === currentUserId ? `
+                            <button class="btn btn-sm btn-outline-danger" 
+                                    onclick="deleteComment(${comment.id})">
+                                <i class="fas fa-trash-alt me-1"></i>Sil
+                            </button>
+                        ` : ''}
+                    </div>
+                    <div id="reply-form-${comment.id}" class="reply-form" style="display: none;">
+                        <textarea class="form-control mb-2" rows="2" placeholder="Yanıtınızı yazın..."></textarea>
+                        <button class="btn btn-sm btn-primary" onclick="submitReply(${comment.id})">
+                            <i class="fas fa-paper-plane me-1"></i>Yanıtla
+                        </button>
+                    </div>
+                    <div class="replies mt-3">
+                        ${comment.replies ? comment.replies.map(reply => `
+                            <div class="reply-card">
+                                <div class="comment-header">
+                                    <span class="comment-user">${reply.user_name}</span>
+                                    <span class="comment-date">${reply.created_at}</span>
+                                </div>
+                                <p class="comment-text text-white">${reply.content}</p>
+                                ${reply.user_id === currentUserId ? `
+                                    <button class="btn btn-sm btn-outline-danger mt-2" 
+                                            onclick="deleteComment(${reply.id})">
+                                        <i class="fas fa-trash-alt me-1"></i>Sil
+                                    </button>
+                                ` : ''}
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                </div>
+            `;
+            return div;
+        }
 
-            const playerId = document.querySelector('input[name="player_id"]').value;
-            const content = document.getElementById('content').value.trim(); // Boşlukları temizle
-
-            // Kullanıcı giriş yapmadıysa veya içerik boşsa uyarı göster
+        // Yorum gönderme fonksiyonu
+        function submitComment() {
+            const content = document.getElementById('comment-input').value.trim();
+            
             if (!content) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Lütfen yorumunuzu girin!',
-                    showConfirmButton: false,
-                    timer: 1500
+                    title: 'Uyarı',
+                    text: 'Lütfen bir yorum yazın!'
                 });
                 return;
             }
 
-            // Yorum verisini gönder
-            fetch(`/player/${playerId}/comment`, {
+            fetch(`/player/${playerId}/comments`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
-                body: JSON.stringify({ player_id: playerId, content: content })
+                body: JSON.stringify({ content: content })
             })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Yorum başarıyla kaydedildi!',
-                            showConfirmButton: false,
-                            timer: 1500
-                        });
-                        document.getElementById('content').value = ''; // Formu temizle
-                        loadComments(playerId); // Yeni yorum eklendikten sonra yorumları yenile
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: data.message || 'Yorum kaydedilemedi.',
-                            showConfirmButton: false,
-                            timer: 1500
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error('Yorum kaydedilirken bir hata oluştu:', error);
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('comment-input').value = '';
+                    loadComments();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Başarılı',
+                        text: 'Yorumunuz eklendi!',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Bir hata oluştu.',
-                        text: 'Lütfen tekrar deneyin.',
-                        showConfirmButton: true
+                        title: 'Hata',
+                        text: data.message
                     });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Bir hata oluştu!'
                 });
-        });
+            });
+        }
 
-        // Sayfa yüklendiğinde yorumları yükle
-        document.addEventListener('DOMContentLoaded', function() {
-            const playerId = <?php echo $playerDetails['profile']['id']; ?>;
-            loadComments(playerId);
-        });
+        // Yanıt formunu gösterme/gizleme fonksiyonu
+        function showReplyForm(commentId) {
+            const replyForm = document.getElementById(`reply-form-${commentId}`);
+            replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Yanıt gönderme fonksiyonu
+        function submitReply(commentId) {
+            const replyForm = document.getElementById(`reply-form-${commentId}`);
+            const content = replyForm.querySelector('textarea').value.trim();
+
+            if (!content) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Uyarı',
+                    text: 'Lütfen bir yanıt yazın!'
+                });
+                return;
+            }
+
+            fetch(`/player/${playerId}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    content: content,
+                    parent_id: commentId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    replyForm.querySelector('textarea').value = '';
+                    replyForm.style.display = 'none';
+                    loadComments();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Başarılı',
+                        text: 'Yanıtınız eklendi!',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hata',
+                        text: data.message
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Bir hata oluştu!'
+                });
+            });
+        }
+
+        // Yorum silme fonksiyonu
+        function deleteComment(commentId) {
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: 'Bu yorumu silmek istediğinizden emin misiniz?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Evet, sil',
+                cancelButtonText: 'İptal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/player/comment/${commentId}/delete`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadComments();
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarılı',
+                                text: 'Yorum silindi!',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Hata',
+                                text: data.message
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Hata',
+                            text: 'Bir hata oluştu!'
+                        });
+                    });
+                }
+            });
+        }
+
+        // Beğeni sayısını güncelleme fonksiyonu
+        function updateLikeCount() {
+            fetch(`/like-count/${playerId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('like-count').textContent = data.likeCount;
+                })
+                .catch(error => console.error('Error updating like count:', error));
+        }
+
+        // Beğeni toggle fonksiyonu
+        function toggleLike(playerId) {
+            fetch(`/player/${playerId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateLikeCount();
+                    const likeButton = document.getElementById('like-button');
+                    likeButton.classList.toggle('liked', data.liked);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hata',
+                        text: data.message
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Bir hata oluştu!'
+                });
+            });
+        }
     </script>
 
 
@@ -703,7 +913,7 @@
         // Beğeni işlemini başlatma veya geri alma
         function toggleLike(playerId) {
             $.ajax({
-                url: `/like-player/${playerId}`,
+                url: `/player/${playerId}/like`,
                 type: 'POST',
                 data: {
                     _token: $('meta[name="csrf-token"]').attr('content'),

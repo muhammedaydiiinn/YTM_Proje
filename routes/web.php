@@ -28,9 +28,9 @@ Route::get('/live-search', [PlayerController::class, 'live_search'])->name('live
 Route::get('/get-player-view', [PlayerController::class, 'getPlayerView'])->name('players.getPlayerView');
 Route::get('/get-player-like', [PlayerController::class, 'getPlayerLike'])->name('players.getPlayerLike');
 Route::get('player/analyze-player/{id}', [PlayerAnalysisController::class, 'analyzePlayer']);
-Route::post('like-player/{playerId}', [PlayerController::class, 'likePlayer']);
+Route::post('/player/{playerId}/like', [PlayerController::class, 'likePlayer'])->name('player.like');
 Route::get('like-count/{playerId}', [PlayerController::class, 'getLikeCount']); // Beğeni sayısını al
-Route::get('/player/{playerId}/comments', [PlayerController::class, 'getPlayerComments'])->name('comments.get');
+Route::get('/player/{playerId}/getComments', [PlayerController::class, 'getPlayerComments'])->name('comments.get');
 Route::post('/player/{playerId}/comment', [PlayerController::class, 'storeComment'])->name('comment.store');
 Route::post('/player/comment/{commentId}/delete', [PlayerController::class, 'deleteComment'])->name('comment.delete');
 
@@ -60,4 +60,44 @@ Route::prefix('admin')->group(function () {
     Route::post('/role_delete/{id}', [AdminController::class, 'role_delete'])->name('admin.role_delete');
     Route::post('/users/status/{id}', [AdminController::class, 'user_status'])->name('admin.user_status');
     Route::post('/users/delete/{id}', [AdminController::class, 'user_delete'])->name('admin.user_delete');
+});
+
+
+// Yorumları getirme (auth gerektirmez)
+Route::get('/player/{playerId}/comments', [PlayerController::class, 'getPlayerComments'])
+    ->name('player.comments.index');
+
+// Beğeni işlemleri için route'lar
+Route::middleware('auth')->group(function () {
+    Route::post('/player/{playerId}/like', [PlayerController::class, 'likePlayer'])
+        ->name('player.like');
+});
+
+// Beğeni sayısını getirme (auth gerektirmez)
+Route::get('/like-count/{playerId}', [PlayerController::class, 'getLikeCount'])
+    ->name('player.like.count');
+
+// Yorum işlemleri için route'lar
+Route::prefix('player')->group(function () {
+    // Auth gerektiren route'lar
+    Route::middleware('auth')->group(function () {
+        // Yorum ekleme
+        Route::post('{playerId}/comments', [PlayerController::class, 'storeComment'])
+            ->name('player.comments.store');
+        
+        // Yorum silme
+        Route::post('comment/{commentId}/delete', [PlayerController::class, 'deleteComment'])
+            ->name('player.comments.delete');
+            
+        // Beğeni işlemi
+        Route::post('{playerId}/like', [PlayerController::class, 'likePlayer'])
+            ->name('player.like');
+    });
+
+    // Auth gerektirmeyen route'lar
+    Route::get('{playerId}/comments', [PlayerController::class, 'getPlayerComments'])
+        ->name('player.comments.index');
+        
+    Route::get('like-count/{playerId}', [PlayerController::class, 'getLikeCount'])
+        ->name('player.like.count');
 });
