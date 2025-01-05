@@ -509,12 +509,12 @@
             <!-- Beğeni Bölümü -->
             <div class="like-section">
                 @if(Auth::check())
-                    <button id="like-button" class="btn btn-primary" onclick="toggleLike({{ $playerDetails['profile']['id'] }})">
+                    <button id="like-button"  onclick="toggleLike({{ $playerDetails['profile']['id'] }})">
                         <i class="bx bx-like"></i>
                         <span id="like-count">0</span>
                     </button>
                 @else
-                    <button class="btn btn-primary" disabled>
+                    <button disabled>
                         <i class="bx bx-like"></i>
                         <span id="like-count">0</span>
                     </button>
@@ -532,7 +532,7 @@
                                  class="form-control mb-2"
                                  rows="3"
                                  placeholder="Yorumunuzu yazın..."></textarea>
-                        <button class="btn btn-primary" onclick="submitComment()">
+                        <button onclick="submitComment()">
                             <i class="fas fa-paper-plane me-2"></i>Yorum Yap
                         </button>
                     </div>
@@ -610,7 +610,7 @@
                     </div>
                     <div id="reply-form-${comment.id}" class="reply-form" style="display: none;">
                         <textarea class="form-control mb-2" rows="2" placeholder="Yanıtınızı yazın..."></textarea>
-                        <button class="btn btn-sm btn-primary" onclick="submitReply('${comment.id}')">
+                        <button class="btn-sm" onclick="submitReply('${comment.id}')">
                             <i class="fas fa-paper-plane me-1"></i>Yanıtla
                         </button>
                     </div>
