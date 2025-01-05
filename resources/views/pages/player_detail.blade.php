@@ -528,9 +528,9 @@
 
                 @if(Auth::check())
                     <div class="comment-form mb-4">
-                        <textarea id="comment-input" 
-                                 class="form-control mb-2" 
-                                 rows="3" 
+                        <textarea id="comment-input"
+                                 class="form-control mb-2"
+                                 rows="3"
                                  placeholder="Yorumunuzu yazın..."></textarea>
                         <button class="btn btn-primary" onclick="submitComment()">
                             <i class="fas fa-paper-plane me-2"></i>Yorum Yap
@@ -557,7 +557,7 @@
 
     <script>
         const currentUserId = '{{ Auth::id() ?? 'null' }}';
-        const playerId = {{ $playerDetails['profile']['id'] }};
+        const playerId = '{{ $playerDetails['profile']['id'] }}';
 
         // Sayfa yüklendiğinde çalışacak fonksiyonlar
         document.addEventListener('DOMContentLoaded', function() {
@@ -573,7 +573,7 @@
                     if (data.success) {
                         const commentsContainer = document.getElementById('comments-container');
                         commentsContainer.innerHTML = '';
-                        
+
                         data.comments.forEach(comment => {
                             const commentElement = createCommentElement(comment);
                             commentsContainer.appendChild(commentElement);
@@ -596,35 +596,35 @@
                     <p class="comment-text text-white">${comment.content}</p>
                     <div class="comment-actions">
                         ${currentUserId ? `
-                            <button class="btn btn-sm btn-outline-light" 
-                                    onclick="showReplyForm(${comment.id})">
+                            <button class="btn btn-sm btn-outline-light"
+                                    onclick="showReplyForm('${comment.id}')">
                                 <i class="fas fa-reply me-1"></i>Yanıtla
                             </button>
                         ` : ''}
                         ${comment.user_id === currentUserId ? `
-                            <button class="btn btn-sm btn-outline-danger" 
-                                    onclick="deleteComment(${comment.id})">
+                            <button class="btn btn-sm btn-outline-danger"
+                                    onclick="deleteComment('${comment.id}')">
                                 <i class="fas fa-trash-alt me-1"></i>Sil
                             </button>
                         ` : ''}
                     </div>
                     <div id="reply-form-${comment.id}" class="reply-form" style="display: none;">
                         <textarea class="form-control mb-2" rows="2" placeholder="Yanıtınızı yazın..."></textarea>
-                        <button class="btn btn-sm btn-primary" onclick="submitReply(${comment.id})">
+                        <button class="btn btn-sm btn-primary" onclick="submitReply('${comment.id}')">
                             <i class="fas fa-paper-plane me-1"></i>Yanıtla
                         </button>
                     </div>
                     <div class="replies mt-3">
                         ${comment.replies ? comment.replies.map(reply => `
-                            <div class="reply-card">
+                            <div class="reply-card mb-1">
                                 <div class="comment-header">
                                     <span class="comment-user">${reply.user_name}</span>
                                     <span class="comment-date">${reply.created_at}</span>
                                 </div>
                                 <p class="comment-text text-white">${reply.content}</p>
                                 ${reply.user_id === currentUserId ? `
-                                    <button class="btn btn-sm btn-outline-danger mt-2" 
-                                            onclick="deleteComment(${reply.id})">
+                                    <button class="btn btn-sm btn-outline-danger mt-2"
+                                            onclick="deleteComment('${reply.id}')">
                                         <i class="fas fa-trash-alt me-1"></i>Sil
                                     </button>
                                 ` : ''}
@@ -639,7 +639,7 @@
         // Yorum gönderme fonksiyonu
         function submitComment() {
             const content = document.getElementById('comment-input').value.trim();
-            
+
             if (!content) {
                 Swal.fire({
                     icon: 'warning',
